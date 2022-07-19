@@ -3,11 +3,11 @@ import requests
 import pickle
 import time
 
-def save_csv(instr):
-    with open(r'd:\tmp\aoc-results.txt', 'w') as outfile:
+def save_csv(instr, filename):
+    with open(f'd:\\tmp\\{filename}', 'w') as outfile:
         outfile.write(instr)
                     
-def gen_csv(indata):
+def gen_times_csv(indata):
     outstr = ['year,day,stars,position,time\n']
     for year in range(2015, 2022):
         for day in range(1, 26):
@@ -18,8 +18,15 @@ def gen_csv(indata):
                         outstr.append(f'{year},{day},{stars},{pos},{timestr}\n')
     return ''.join(outstr)  
 
-def save_pickle(indata):
-    with open(r'd:\tmp\aoc-results-dict.txt', 'wb') as outfile:
+def gen_completion_csv(indata):
+    outstr = ['year,day,both,one\n']
+    for year, data in indata.items():
+        for day, completed in data.items():
+            outstr.append(f'{year},{day},{completed[0]},{completed[1]}\n')
+    return ''.join(outstr)
+
+def save_pickle(indata, filename):
+    with open(f'd:\\tmp\\{filename}', 'wb') as outfile:
         pickle.dump(indata, outfile)
 
 def load_pickle():
@@ -35,7 +42,7 @@ def dl_page(url):
         print(err)
     return r.text
 
-def parse_pages():
+def get_leaderboard_times():
     results = {}
 
     for year in range(2015, 2022):
@@ -55,12 +62,32 @@ def parse_pages():
                 results[year][day][starstr][posstr] = secs
     return results
 
+def get_completion_stats():
+    completion = {}
+
+    for year in range(2015, 2022):
+        completion[year] = {k:[] for k in range(1, 26)}
+
+        url = f'https://adventofcode.com/{year}/stats'
+        page = dl_page(url)
+        #print(page)
+        nums = [int(x[:-7]) for x in re.findall(r'\d+</span>', page)]
+        day = 25
+        for both, one in zip(nums[::2], nums[1::2]):
+            completion[year][day] = [both, one]
+            day -= 1
+    return completion
+
 def main():
-    res = parse_pages()
-    save_pickle(res)
+    #res = get_leaderboard_times()
+    #save_pickle(res, 'aoc-times-dict.txt')
     #res = load_pickle()
-    output = gen_csv(res)
-    save_csv(output)
+    #output = gen_times_csv(res)
+    #save_csv(output, 'aoc-times.txt')
+    comp = get_completion_stats()
+    save_pickle(comp, 'aoc-comp-dict.txt')
+    compstr = gen_completion_csv(comp)
+    save_csv(compstr, 'aoc-comp.txt')
     
 if __name__ == '__main__':
     main()
