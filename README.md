@@ -4,7 +4,7 @@ Some visualizations of Advent of Code solution times, pulled from the leaderboar
 
 <details>
 	<summary>2015</summary>
-	![2015](aoc-2015.png)
+	![2015](https://github.com/Azcobu/aoc-stats/blob/master/aoc-2015.png?raw=true)
 </details>
 
 <details>
