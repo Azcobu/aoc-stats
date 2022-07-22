@@ -3,6 +3,8 @@ import pickle
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from datetime import date
+import statistics
 
 def load_data(fname):
     with open(fname, 'rb') as infile:
@@ -14,7 +16,14 @@ def longest_times(times):
     for year, data in times.items():
         for day, stars in data.items():
             longest[(year, day)] = stars['2'][100]
-    return sorted(longest.items(), key=lambda x:x[1], reverse=True)[:10]
+    longprobs = sorted(longest.items(), key=lambda x:x[1], reverse=True)
+
+
+
+    print('| Year.Day | Completion Time (secs) |\n| --------- | ------------ |')
+    for line in longprobs[:5]:
+        aoc_url = f'https://adventofcode.com/{line[0][0]}/day/{line[0][1]}'
+        print(f'| [{line[0][0]}.{line[0][1]}]({aoc_url}) | {line[1]} |')
 
 def longest_years(times):
     yeartime = {}
@@ -35,14 +44,14 @@ def longest_years(times):
     plt.ylabel('Summed Solution Time (seconds)')
     #plt.show()
     fig = bp.get_figure()
-    fig.savefig(f'AoC Sum By Year.png')
+    fig.savefig(f'images/aoc-sum-year.png')
 
-def stripplot(times, year):
+def stripplot(times, year, mode='show'):
     df = pd.read_csv(r'd:\tmp\aoc-results.txt')
     df = df[df['year'] == year]
     plt.style.use("seaborn")
 
-    k = sns.lmplot(x="day", y="time", hue='stars', data=df, order=2, line_kws={'linewidth':2},
+    k = sns.lmplot(x="day", y="time", hue='stars', data=df, order=5, line_kws={'linewidth':2},
                   scatter=False, legend=False, height=7, aspect=8/5)
     stripplot = sns.stripplot(x="day", y="time", hue='stars', dodge=True, data=df) # marker="*", size=8
 
@@ -57,16 +66,19 @@ def stripplot(times, year):
     plt.ylim(bottom=0)
     plt.title(f'Advent of Code {year} Top 100 Leaderboard Times')
     plt.xlabel('Day')
-    plt.ylabel('Solution Time (Seconds)')
+    plt.ylabel('Solution Time (seconds)')
 
     plt.tight_layout()
-    #plt.show()
+    if mode == 'show':
+        plt.show()
     fig = stripplot.get_figure()
-    fig.savefig(f'aoc-{year}.png')
+    fig.savefig(f'images/aoc-{year}.png')
 
 def showall(times):
     new = []
-    for year in range(2015, 2022):
+    curryear = date.today().year
+
+    for year in range(2015, curryear):
         for day in range(1, 26):
             new.append({'year':f'{year}.{day}', 'time':times[year][day]['2'][100]})
 
@@ -89,19 +101,66 @@ def showall(times):
     #fig.savefig(f'AoC All.jpg', dpi=300)
 
 def gen_yearly_charts(times):
-    for y in range(2015, 2022):
+    for y in range(2015, date.today().year):
         print(f'Rendering graph for {y}.')
-        stripplot(times, y)
+        stripplot(times, y, 0)
+
+def completion_table(comp):
+    new = {}
+    for year, data in comp.items():
+        for day, stars in data.items():
+            if day != 25:
+                new[f'{year}.{day}'] = round((1 - stars[1]/ (stars[0] + stars[1])) * 100, 2)
+
+    compsort = sorted(new.items(), key=lambda x:x[1])
+    print('| Year.Day | Completion % |\n| --------- | ------------ |')
+    for line in compsort[:5]:
+        y, _, d = line[0].partition('.')
+        aoc_url = f'https://adventofcode.com/{y}/day/{d}'
+        print(f'| [{line[0]}]({aoc_url}) | {line[1]}% |')
+
+def day_diffs(comp):
+    diffs = {}
+    for year, data in comp.items():
+        for day, stars in data.items():
+            if day != 1:
+                diff = 1 - (comp[year][day][0] / comp[year][day-1][0])
+                diffs[f'{year}.{day}'] = diff
+    
+    print(f'Mean daily drop-off is {statistics.mean(diffs.values())*100:.3}%')
+    print(f'Median daily drop-off is {statistics.median(diffs.values())*100:.3}%')
+
+    print('| Year.Day | Daily Drop-Off (%) |\n| --------- | ------------ |')
+    for line in sorted(diffs.items(), key=lambda x:x[1], reverse=1)[:5]:
+        y, _, d = line[0].partition('.')
+        aoc_url = f'https://adventofcode.com/{y}/day/{d}'
+        print(f'| [{line[0]}]({aoc_url}) | {line[1]*100:.3}% |')
+
+def completion_stats(comp):
+    done1, done2 = 0, 0
+    year_comps = {k:0 for k in range(2015, 2022)}
+    for year, data in comp.items():
+        for day, stars in data.items():
+            done2 += stars[0]
+            done1 += stars[1]
+            year_comps[year] += stars[0]
+
+    print(f'{done2} have done 2 stars problems, {done1} have done 1 star.')
+    print(f'{done1/done2:.3}')
+    print(year_comps)
 
 def main():
-    complete = load_data(r'd:\tmp\aoc-comp-dict.txt')
+    comp = load_data(r'd:\tmp\aoc-comp-dict.txt')
     times = load_data(r'd:\tmp\aoc-results-dict.txt')
     #print(times)
     #print(longest_times(times))
     #longest_years(times)
     #stripplot(times, 2015)
-    gen_yearly_charts(times)
+    #gen_yearly_charts(times)
     #showall(times)
+    #completion_table(comp)
+    day_diffs(comp)
+    #completion_stats(comp)
 
 if __name__ == '__main__':
     main()
