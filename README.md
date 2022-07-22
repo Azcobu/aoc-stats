@@ -69,14 +69,14 @@ Some graphs of Advent of Code solution times by year, pulled from the leaderboar
 </details>
 
 <details>
-<summary>2015</summary>
+<summary>2017</summary>
 
 ![2017](images/aoc-2017.png?raw=true)
 
 </details>
 
 <details>
-<summary>2015</summary>
+<summary>2018</summary>
 
 ![2018](images/aoc-2018.png?raw=true)
 
